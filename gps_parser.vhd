@@ -46,7 +46,7 @@ end gps_parser;
 
 architecture Behavioral of gps_parser is
 
-type state_type is (idle, start_store, end_sentence, parse, done); 
+type state_type is (idle, determine_sentence, start_store, end_sentence, parse, done); 
 signal curr : state_type :=  idle;
 
 
@@ -56,7 +56,10 @@ type sent_arr_type is array(0 to 127) of std_logic_vector(7 downto 0);
 
 signal sent_arr : sent_arr_type; 
 
+signal determine_sentence_arr : sent_arr_type(0 to 2); 
+
 signal index : integer range 0 to 127 := 0; 
+signal index_sentence: integer range 0 to 2 := 0; 
 signal store : std_logic := '0'; 
 
 signal field_index : integer range 0 to 15 := 0; 
@@ -85,15 +88,38 @@ begin
                 when idle => 
                     if(newChar = '1') then 
                         if(charIn = x"24") then 
-                            index <= 0; 
-                            store <= '1'; 
-                            curr <= start_store; 
+                            index_sentence  <= 0; 
+                            determine_sentence_arr(0) <= charIn; 
+                            curr <= determine_sentence; 
                         else 
                             curr <= idle; 
                         end if; 
                      else 
                         curr <= idle; 
                     end if;
+                when determine_sentence  => 
+                    if newChar = '1' then 
+                        index_sentence <= index_sentence + 1; 
+                        determine_sentence_arr(index_sentence) <= charIn; 
+                        
+                        --checking if we get $GPRMC format
+                        if index_sentence = 2 then
+                            if determine_sentence_arr(1) = x"47" and determine_sentence_arr(2) = x"50" and charIn = x"52" then
+                                sent_arr(0) <= determine_sentence_arr(0); 
+                                sent_arr(1) <= determine_sentence_arr(1);
+                                sent_arr(2) <= determine_sentence_arr(2);
+                                sent_arr(3) <= charIn;
+                                
+                                index <= 4; 
+                                store <= '1'; 
+                                curr <= start_store; 
+                            else
+                                curr <= idle; 
+                            end if; 
+                        end if; 
+                        
+                    end if; 
+                 
                 when start_store => 
                     if store = '1' then 
                         sent_arr(index) <= charIn; 
@@ -102,8 +128,10 @@ begin
                             curr <= end_sentence;  
                         end if; 
                         
+                        index <= index + 1; 
                     end if; 
                 when end_sentence => 
+                    store <= '0'; 
                     curr <= parse; 
                 when parse => 
                     --$GPRMC
