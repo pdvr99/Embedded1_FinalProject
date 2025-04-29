@@ -39,8 +39,8 @@ entity gps_parser is
             charIn : in std_logic_vector(7 downto 0); 
             latitude_ready : out std_logic;
             longitude_ready : out std_logic; 
-            latitude_data : out std_logic_vector(31 downto 0); 
-            longitude_data : out std_logic_vector(31 downto 0)
+            latitude_data : out std_logic_vector(71 downto 0); 
+            longitude_data : out std_logic_vector(79 downto 0)
     );
 end gps_parser;
 
@@ -132,6 +132,8 @@ end process;
 
 --receive sentence
  
+ latitude_data <= latitude_inter; 
+ longitude_data <= longitude_inter; 
 
 
 end Behavioral;
