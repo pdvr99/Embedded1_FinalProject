@@ -53,10 +53,11 @@ signal curr : state_type :=  idle;
 --each sentence is about 600 bits long. So let's alocate 2^10 bits. 
 --there are 75 chaarcters present in each sentence (So let's allocate an array of 128 elements)
 type sent_arr_type is array(0 to 127) of std_logic_vector(7 downto 0); 
+type small_arr_type is array(0 to 2) of std_logic_vector(7 downto 0);
 
 signal sent_arr : sent_arr_type; 
 
-signal determine_sentence_arr : sent_arr_type(0 to 2); 
+signal determine_sentence_arr : small_arr_type; 
 
 signal index : integer range 0 to 127 := 0; 
 signal index_sentence: integer range 0 to 2 := 0; 
@@ -67,9 +68,9 @@ signal char_count : integer range 0 to 127 := 0;
 
 signal gps_valid : std_logic := '0'; 
 
-signal latitude_inter : std_logic_vector(31 downto 0) := (others => '0');
+signal latitude_inter : std_logic_vector(71 downto 0) := (others => '0');
 
-signal longitude_inter : std_logic_vector(31 downto 0) := (others => '0');
+signal longitude_inter : std_logic_vector(79 downto 0) := (others => '0');
 
 begin
 
