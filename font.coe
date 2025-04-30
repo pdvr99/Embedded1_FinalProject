@@ -1,6 +1,5 @@
 memory_initialization_radix=2;
 memory_initialization_vector=
--- '.' (period)
 00000000,
 00000000,
 00000000,
@@ -10,7 +9,6 @@ memory_initialization_vector=
 00011000,
 00000000,
 
--- '0'
 00111100,
 01100110,
 01101110,
@@ -20,7 +18,6 @@ memory_initialization_vector=
 00111100,
 00000000,
 
--- '1'
 00011000,
 00111000,
 00011000,
@@ -30,7 +27,6 @@ memory_initialization_vector=
 01111110,
 00000000,
 
--- '2'
 00111100,
 01100110,
 00000110,
@@ -40,7 +36,6 @@ memory_initialization_vector=
 01111110,
 00000000,
 
--- '3'
 00111100,
 01100110,
 00000110,
@@ -50,7 +45,6 @@ memory_initialization_vector=
 00111100,
 00000000,
 
--- '4'
 00001100,
 00011100,
 00111100,
@@ -60,7 +54,6 @@ memory_initialization_vector=
 00001100,
 00000000,
 
--- '5'
 01111110,
 01100000,
 01111100,
@@ -70,7 +63,6 @@ memory_initialization_vector=
 00111100,
 00000000,
 
--- '6'
 00111100,
 01100110,
 01100000,
@@ -80,7 +72,6 @@ memory_initialization_vector=
 00111100,
 00000000,
 
--- '7'
 01111110,
 00000110,
 00001100,
@@ -90,7 +81,6 @@ memory_initialization_vector=
 00110000,
 00000000,
 
--- '8'
 00111100,
 01100110,
 01100110,
@@ -100,7 +90,6 @@ memory_initialization_vector=
 00111100,
 00000000,
 
--- '9'
 00111100,
 01100110,
 01100110,
@@ -109,3 +98,4 @@ memory_initialization_vector=
 01100110,
 00111100,
 00000000;
+
