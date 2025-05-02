@@ -48,13 +48,13 @@ begin
     begin
         if rising_edge(clk) then
         
-            if(unsigned(counter) < 1084) then
+            if(unsigned(counter) < 13019) then
                 div <= '0'; 
-            elsif(unsigned(counter) >= 1084)then
+            elsif(unsigned(counter) >= 13019)then
                 div <= '1'; 
             end if;
         
-            if(unsigned(counter) < 1084) then 
+            if(unsigned(counter) < 13019) then 
                 counter <=  std_logic_vector(unsigned(counter) + 1); 
             else 
                 counter <= (others => '0'); 
