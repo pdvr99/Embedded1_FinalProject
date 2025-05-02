@@ -72,6 +72,10 @@ begin
             
                 read_addr_inter <= read_addr_inter + 1; 
                 
+                if(read_addr_inter = 69) then
+                    read_addr_inter <= 0; 
+                end if; 
+                
                 if ram_data = x"2C" then --comma
                      comma_count <= comma_count + 1; 
                 else     
@@ -86,6 +90,8 @@ begin
                 
                 if comma_count > 5 then
                     done <= '1'; 
+                else
+                    done <= '0'; 
                 end if; 
             end if; 
         end if;
