@@ -57,23 +57,20 @@ architecture Behavioral of store_sentence is
 begin
     
     --write
-    process(clk) 
+    process(newChar) 
     begin 
-        if rising_edge(clk) then
-            if rst = '1' then 
-                wr_addr <= 0; 
-                full_block <= '0'; 
-            elsif newChar = '1' and full_block = '0' then
+        if newChar = '1' and full_block = '0' then
+        
+            ram_block(wr_addr) <= charIn; 
+           
+            if wr_addr = 69 then 
+                full_block <= '1';
+                wr_addr <= 0;  
+            else 
+                wr_addr <= wr_addr + 1; 
+            end if;  
             
-                ram_block(wr_addr) <= charIn; 
-               
-                if wr_addr = 69 then 
-                    full_block <= '1'; 
-                else 
-                    wr_addr <= wr_addr + 1; 
-                end if;  
-            end if ; 
-        end if; 
+        end if ; 
     end process; 
     
     wr_done <= full_block;
@@ -83,7 +80,7 @@ begin
     begin 
         if rising_edge(clk) then
             if read_en = '1' then 
-                charOut <= ram_block(read_addr);
+                charOut <= ram_block(read_addr); 
             else
                 charOut <= (others => '0');  
             end if; 
