@@ -49,16 +49,10 @@ end pixel_pusher;
 
 architecture Behavioral of pixel_pusher is
 
-    component fonts IS
-      PORT (
-        clka : IN STD_LOGIC;
-        addra : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
-        douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
-      );
-    END component;
+
     
     signal addr_inter: std_logic_vector(6 downto 0) := (others => '0'); 
-    signal char_index : std_logic_vector(7 downto 0) := (others => '0');
+    signal char_index : std_logic_vector(2 downto 0) := (others => '0');
     signal char_col : integer range 0 to 9 := 0; 
     signal pixel_data : std_logic_vector(7 downto 0); 
     signal pixel_col : integer range 0 to 7 := 0;
@@ -68,34 +62,27 @@ architecture Behavioral of pixel_pusher is
     signal row_inter : std_logic_vector(2 downto 0);
     
     signal addr_inter_period: std_logic_vector(6 downto 0) := (others => '0');
-    signal addr_inter_0: std_logic_vector(6 downto 0) := x"08"; -- Address 0 ('.')
-    signal addr_inter_1: std_logic_vector(6 downto 0) := x"10"; -- Address 8 ('0')
-    signal addr_inter_2: std_logic_vector(6 downto 0) := x"18"; -- Address 16 ('1')
-    signal addr_inter_3: std_logic_vector(6 downto 0) := x"20"; -- Address 24 ('2')
-    signal addr_inter_4: std_logic_vector(6 downto 0) := x"28"; -- Address 32 ('3')
-    signal addr_inter_5: std_logic_vector(6 downto 0) := x"30"; -- Address 40
-    signal addr_inter_6: std_logic_vector(6 downto 0) := x"38"; -- Address 48
-    signal addr_inter_7: std_logic_vector(6 downto 0) := x"40"; -- Address 56
-    signal addr_inter_8: std_logic_vector(6 downto 0) := x"48"; -- Address 64
-    signal addr_inter_9: std_logic_vector(6 downto 0) := x"50"; -- Address 72
+    signal addr_inter_0: std_logic_vector(6 downto 0) :=  "0001000"; -- Address 0 ('.')
+    signal addr_inter_1: std_logic_vector(6 downto 0) :=  "0010000"; -- Address 8 ('0')
+    signal addr_inter_2: std_logic_vector(6 downto 0) :=  "0011000"; -- Address 16 ('1')
+    signal addr_inter_3: std_logic_vector(6 downto 0) :=  "0010000"; -- Address 24 ('2')
+    signal addr_inter_4: std_logic_vector(6 downto 0) :=  "0101000"; -- Address 32 ('3')
+    signal addr_inter_5: std_logic_vector(6 downto 0) :=  "0110000"; -- Address 40
+    signal addr_inter_6: std_logic_vector(6 downto 0) :=  "0111000"; -- Address 48
+    signal addr_inter_7: std_logic_vector(6 downto 0) :=  "1000000"; -- Address 56
+    signal addr_inter_8: std_logic_vector(6 downto 0) :=  "1001000"; -- Address 64
+    signal addr_inter_9: std_logic_vector(6 downto 0) :=  "1001000"; -- Address 72
     
     signal hcount_inter, vcount_inter: std_logic_vector(9 downto 0); 
    
 begin
 
-    rom : fonts 
-    port map(
-        clka => clk, 
-        addra => addr_inter, 
-        douta => pixel
-    
-    );
+
 
     process(hcount_inter, vcount_inter)
     begin
-        if(unsigned(vcount_inter) < 320) then 
+        if(unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 8) then 
             if(hcount_inter(2 downto 0) = "000") then --multiples of 8
-                char_index <= hcount_inter(9 downto 3); 
                 
                 case to_integer(unsigned(char_index)) is
                     when 0 => current_char <= latitude_data(71 downto 64);  -- First character of latitude
@@ -109,10 +96,11 @@ begin
                     when 8 => current_char <= latitude_data(7 downto 0);
                     when others => current_char <= (others => '0');
                 end case;
+                
+                char_index <= std_logic_vector(unsigned(char_index) + 1); 
             end if; 
-        else
-            if(hcount_inter(2 downto 0) = "000") then --multiples of 8
-                char_index <= hcount_inter(9 downto 3); 
+        elsif(unsigned(vcount_inter) >= 12 and unsigned(vcount_inter) <= 20) then
+            if(hcount_inter(2 downto 0) = "000") then --multiples of 8 
                 
                 case to_integer(unsigned(char_index)) is
                     when 0 => current_char <= longitude_data(79 downto 72);  -- First character of longitude
@@ -127,6 +115,8 @@ begin
                     when 9 => current_char <= longitude_data(7 downto 0);
                     when others => current_char <= (others => '0');
                 end case;
+                
+                
             end if; 
         end if; 
         
@@ -137,56 +127,57 @@ begin
     begin 
         if(rising_edge(clk)) then
             if(en = '1' and vid = '1' and unsigned(hcount) < 480) then
-                case current_char is 
-                    when x"2E" => 
-                        addr_inter <= addr_inter_period; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_period) + 1);
-                    when x"30" => 
-                        addr_inter <= addr_inter_0; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_0) + 1);
-                    when x"31" => 
-                        addr_inter <= addr_inter_1; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_1) + 1);
-                    when x"32" => 
-                        addr_inter <= addr_inter_2; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_2) + 1);
-                    when x"33" => 
-                        addr_inter <= addr_inter_3; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_3) + 1);
-                    when x"34" => 
-                        addr_inter <= addr_inter_4; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_4) + 1);
-                    when x"35" => 
-                        addr_inter <= addr_inter_5; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_5) + 1);
-                     when x"36" => 
-                        addr_inter <= addr_inter_6; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_6) + 1);
-                    when x"37" => 
-                        addr_inter <= addr_inter_7; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_7) + 1);
-                     when x"38" => 
-                        addr_inter <= addr_inter_8; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_8) + 1);
-                     when x"39" => 
-                        addr_inter <= addr_inter_9; 
-                        addr_inter_period <= std_logic_vector(unsigned(addr_inter_9) + 1);                                                                                             
-                    when others => 
-                       addr_inter <= (others => '0');
-                end case; 
+                if((unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 8) or (unsigned(vcount_inter) >= 12 and unsigned(vcount_inter) <= 20)) then
+                    case current_char is 
+                        when x"2E" => 
+                            addr_inter <= addr_inter_period;
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_period) + 1);
+                        when x"30" => 
+                            addr_inter <= addr_inter_0; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_0) + 1);
+                        when x"31" => 
+                            addr_inter <= addr_inter_1; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_1) + 1);
+                        when x"32" => 
+                            addr_inter <= addr_inter_2; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_2) + 1);
+                        when x"33" => 
+                            addr_inter <= addr_inter_3; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_3) + 1);
+                        when x"34" => 
+                            addr_inter <= addr_inter_4; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_4) + 1);
+                        when x"35" => 
+                            addr_inter <= addr_inter_5; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_5) + 1);
+                         when x"36" => 
+                            addr_inter <= addr_inter_6; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_6) + 1);
+                        when x"37" => 
+                            addr_inter <= addr_inter_7; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_7) + 1);
+                         when x"38" => 
+                            addr_inter <= addr_inter_8; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_8) + 1);
+                         when x"39" => 
+                            addr_inter <= addr_inter_9; 
+                            addr_inter_period <= std_logic_vector(unsigned(addr_inter_9) + 1);                                                                                             
+                        when others => 
+                           addr_inter <= (others => '0');
+                    end case; 
+                end if; 
                 
-                if(unsigned(vcount_inter) = 320) then
+                if(unsigned(vcount_inter) = 9 or unsigned(vcount_inter) >= 21) then
                     addr_inter_period <= (others => '0');
-                    addr_inter_0 <= x"08"; -- Address 0 ('.')
-                    addr_inter_1 <= x"10"; -- Address 8 ('0')
-                    addr_inter_2 <= x"18"; -- Address 16 ('1')
-                    addr_inter_3 <= x"20"; -- Address 24 ('2')
-                    addr_inter_4 <= x"28"; -- Address 32 ('3')
-                    addr_inter_5 <= x"30"; -- Address 40
-                    addr_inter_6 <= x"38"; -- Address 48
-                    addr_inter_7 <= x"40"; -- Address 56
-                    addr_inter_8 <= x"48"; -- Address 64
-                    addr_inter_9 <= x"50"; -- Address addr 
+                    addr_inter_1 <= "0010000"; -- Address 16 ('0')
+                    addr_inter_2 <= "0011000"; -- Address 24 ('1')
+                    addr_inter_3 <= "0100000"; -- Address 32 ('2')
+                    addr_inter_4 <= "0101000"; -- Address 40 ('3')
+                    addr_inter_5 <= "0110000"; -- Address 48 ('4')
+                    addr_inter_6 <= "0111000"; -- Address 56 ('5')
+                    addr_inter_7 <= "1000000"; -- Address 64 ('6')
+                    addr_inter_8 <= "1001000"; -- Address 72 ('7')
+                    addr_inter_9 <= "1010000"; -- Address 80 ('8')
                 end if; 
             elsif(vs = '0') then 
                 addr_inter <= (others => '0');
