@@ -35,14 +35,18 @@ entity pixel_pusher is
     port ( 
             clk, en: in std_logic;
             vs: in std_logic; 
-            pixel: in std_logic_vector(7 downto 0); 
-            hcount, vcount: in std_logic_vector(9 downto 0); 
+            pixel1: in std_logic_vector(7 downto 0);
+            pixel2: in std_logic_vector(7 downto 0); 
+            hcount, vcount: in std_logic_vector(9 downto 0);
+            font_toggle : in std_logic;  
             vid: in std_logic; 
             latitude_data  : in std_logic_vector(71 downto 0); 
             longitude_data : in std_logic_vector(79 downto 0); 
             R, B: out std_logic_vector(4 downto 0); 
             G: out std_logic_vector(5 downto 0); 
-            addr: out std_logic_vector(6 downto 0)
+            font_type : out std_logic; 
+            addr1: out std_logic_vector(6 downto 0);
+            addr2 : out std_logic_vector(6 downto 0) 
                
     );
 end pixel_pusher;
@@ -51,7 +55,8 @@ architecture Behavioral of pixel_pusher is
 
 
     
-    signal addr_inter: std_logic_vector(6 downto 0) := (others => '0'); 
+    signal addr_inter_font1: std_logic_vector(6 downto 0) := (others => '0'); 
+    signal addr_inter_font2: std_logic_vector(6 downto 0) := (others => '0');
     signal char_index : std_logic_vector(2 downto 0) := (others => '0');
     signal char_col : integer range 0 to 9 := 0; 
     signal pixel_data : std_logic_vector(7 downto 0); 
@@ -59,7 +64,8 @@ architecture Behavioral of pixel_pusher is
     
     signal current_char : std_logic_vector(7 downto 0);  
     
-    signal row_inter : std_logic_vector(2 downto 0);
+    signal font_select : std_logic := '0';
+    signal prev_btn_state : std_logic := '0';
 
 
     signal addr_inter_period : integer range 0 to 7 := 0; 
@@ -83,6 +89,13 @@ begin
     process(clk, hcount_inter, vcount_inter)
     begin
         if(rising_edge(clk)) then
+        
+            if(font_toggle  = '1' and prev_btn_state  = '0') then
+                font_select <= not font_select; 
+            end if; 
+            
+            prev_btn_state <= font_toggle;
+            
             if(unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 8) then 
                 if(hcount_inter(2 downto 0) = "000") then --multiples of 8
                     
@@ -170,33 +183,60 @@ begin
     process(clk, hcount_inter, vcount_inter)
     begin
         if(rising_edge(clk)) then 
-          if((unsigned(hcount_inter) >= 0 and unsigned(hcount_inter) <= 79) and ((unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 7) or (unsigned(vcount_inter) >= 12 and unsigned(vcount_inter) <= 19))) then
+          if((unsigned(hcount_inter) >= 0 and unsigned(hcount_inter) <= 79) and font_select = '0' and ((unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 7) or (unsigned(vcount_inter) >= 12 and unsigned(vcount_inter) <= 19))) then
             case current_char is 
                 when x"2E" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_period, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_period, 7));
                 when x"30" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_0, 7));
+                  addr_inter_font1  <= std_logic_vector(to_unsigned(addr_inter_0, 7));
                 when x"31" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_1, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_1, 7));
                 when x"32" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_2, 7)); 
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_2, 7)); 
                 when x"33" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_3, 7)); 
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_3, 7)); 
                 when x"34" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_4, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_4, 7));
                 when x"35" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_5, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_5, 7));
                 when x"36" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_6, 7)); 
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_6, 7)); 
                 when x"37" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_7, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_7, 7));
                 when x"38" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_8, 7));
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_8, 7));
                 when x"39" => 
-                  addr_inter <= std_logic_vector(to_unsigned(addr_inter_9, 7));                                                                                         
+                  addr_inter_font1 <= std_logic_vector(to_unsigned(addr_inter_9, 7));                                                                                         
                 when others => 
-                  addr_inter <= (others => '0');        
+                  addr_inter_font1 <= (others => '0');        
             end case; 
+          elsif((unsigned(hcount_inter) >= 0 and unsigned(hcount_inter) <= 79) and font_select = '1' and ((unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 7) or (unsigned(vcount_inter) >= 12 and unsigned(vcount_inter) <= 19))) then
+            case current_char is 
+                when x"2E" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_period, 7));
+                when x"30" => 
+                  addr_inter_font2  <= std_logic_vector(to_unsigned(addr_inter_0, 7));
+                when x"31" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_1, 7));
+                when x"32" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_2, 7)); 
+                when x"33" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_3, 7)); 
+                when x"34" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_4, 7));
+                when x"35" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_5, 7));
+                when x"36" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_6, 7)); 
+                when x"37" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_7, 7));
+                when x"38" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_8, 7));
+                when x"39" => 
+                  addr_inter_font2 <= std_logic_vector(to_unsigned(addr_inter_9, 7));                                                                                         
+                when others => 
+                  addr_inter_font2 <= (others => '0');        
+            end case;           
           end if;  
         end if;  
     end process;
@@ -209,16 +249,26 @@ begin
     begin 
         if(rising_edge(clk)) then
    
-            if(en = '1' and vid = '1' and ((unsigned(vcount) >= 8 and unsigned(vcount) <= 12) or unsigned(vcount) > 19) and unsigned(hcount) < 480) then 
-               addr <= (others => '0'); 
+            if(en = '1' and vid = '1' and font_select = '0' and ((unsigned(vcount) >= 8 and unsigned(vcount) <= 12) or unsigned(vcount) > 19) and unsigned(hcount) < 480) then 
+                   addr1 <= (others => '0'); 
             elsif(en = '1' and vid = '1' and unsigned(hcount) < 480) then
-               addr <= addr_inter;
+                   addr1 <= addr_inter_font1;
             end if;  
             
-            if(en = '1' and vid = '1' and unsigned(hcount) < 480) then
-                R <= pixel(7 downto 5) & "00"; 
-                G <= pixel(4 downto 2) & "000"; 
-                B <= pixel(1 downto 0) & "000"; 
+            if(en = '1' and vid = '1' and font_select = '1' and ((unsigned(vcount) >= 8 and unsigned(vcount) <= 12) or unsigned(vcount) > 19) and unsigned(hcount) < 480) then 
+                   addr2 <= (others => '0'); 
+            elsif(en = '1' and vid = '1' and unsigned(hcount) < 480) then
+                   addr2 <= addr_inter_font2;
+            end if; 
+            
+            if(en = '1' and vid = '1' and font_select = '0' and unsigned(hcount) < 480) then
+                R <= pixel1(7 downto 5) & "00"; 
+                G <= pixel1(4 downto 2) & "000"; 
+                B <= pixel1(1 downto 0) & "000"; 
+            elsif(en = '1' and vid = '1' and font_select = '1' and unsigned(hcount) < 480) then
+                R <= pixel2(7 downto 5) & "00"; 
+                G <= pixel2(4 downto 2) & "000"; 
+                B <= pixel2(1 downto 0) & "000";             
             else 
                 R <= (others => '0'); 
                 G <= (others => '0');
@@ -231,5 +281,7 @@ begin
 
     hcount_inter <= hcount; 
     vcount_inter <= vcount; 
+    
+    font_type <= font_select; 
 
 end Behavioral;
