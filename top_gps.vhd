@@ -114,7 +114,8 @@ architecture Behavioral of top_gps is
     component vga_ctrl is
     port ( 
             clk, en: in std_logic; 
-            hcount, vcount: out std_logic_vector(9 downto 0); 
+            hcount, vcount: out std_logic_vector(9 downto 0);
+            done: in std_logic;  
             vid: out std_logic; 
             hs, vs: out std_logic  
     );
@@ -149,6 +150,7 @@ architecture Behavioral of top_gps is
     signal vid: std_logic; 
     signal hs: std_logic; 
     signal vs: std_logic;
+    signal done_inter : std_logic; 
     signal latitude_data : std_logic_vector(71 downto 0); 
     signal longitude_data :std_logic_vector(79 downto 0);
     signal R, B: std_logic_vector(4 downto 0); 
@@ -176,7 +178,7 @@ begin
             rst            => rst_inter,
             ram_data       => ram_data,
             start_parse    => wr_done,
-            done           => done,
+            done           => done_inter,
             read_addr      => rd_addr,
             latitude_data  => latitude_data,
             longitude_data => longitude_data
@@ -234,6 +236,7 @@ begin
         port map(
             clk => clk, 
             en => en_inter_vga, 
+            done => done_inter,
             hcount => hcount,
             vcount => vcount, 
             vid => vid, 
@@ -249,7 +252,7 @@ begin
     
     );
 
-
+    done <= done_inter;
     vga_hs <= hs; 
     vga_vs <= vs;
     vga_r <= R;
