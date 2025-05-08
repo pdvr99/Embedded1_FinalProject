@@ -35,6 +35,7 @@ entity vga_ctrl is
     port ( 
             clk, en: in std_logic; 
             hcount, vcount: out std_logic_vector(9 downto 0); 
+            done : in std_logic; 
             vid: out std_logic; 
             hs, vs: out std_logic  
     );
@@ -52,7 +53,7 @@ begin
 
     process(clk)
     begin
-        if(rising_edge(clk) and en = '1') then 
+        if(rising_edge(clk) and en = '1' and done = '1') then 
                 if(unsigned(hcount_inter) = 799) then 
                     hcount_inter <= (others => '0');
                     
