@@ -34,10 +34,15 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity top_gps is
     port ( 
             clk : in std_logic; 
-            btn : in std_logic; 
+            btn : in std_logic_vector(1 downto 0); 
             rx : in std_logic;             
             done : out std_logic;
+            sck : out std_logic; 
             vga_hs, vga_vs: out std_logic;
+            MOSI_value : out std_logic; 
+            cs_value : out std_logic; 
+            dc_value : out std_logic; 
+            bit_out : out std_logic; 
             vga_r, vga_b: out std_logic_vector(4 downto 0); 
             vga_g: out std_logic_vector(5 downto 0)            
 
@@ -88,20 +93,84 @@ architecture Behavioral of top_gps is
       );
     END component;
     
-    component pixel_pusher is
+    component fonts_1 IS
+      PORT (
+        clka : IN STD_LOGIC;
+        addra : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
+        douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+      );
+    END component;   
+    
+    component spi_clk is
     port ( 
-            clk, en: in std_logic;
-            vs: in std_logic; 
-            pixel: in std_logic_vector(7 downto 0); 
-            hcount, vcount: in std_logic_vector(9 downto 0); 
-            vid: in std_logic; 
-            latitude_data  : in std_logic_vector(71 downto 0); 
-            longitude_data : in std_logic_vector(79 downto 0); 
-            R, B: out std_logic_vector(4 downto 0); 
-            G: out std_logic_vector(5 downto 0); 
-            addr: out std_logic_vector(6 downto 0)
-               
+            clk : in std_logic; 
+            sck : out std_logic
     );
+    end component;
+    
+    component send_font is
+        port ( 
+            sck         : in std_logic;       
+            font_type   : in std_logic;        
+            en          : in std_logic;  
+            done        : in std_logic;       
+            pixel1      : in std_logic_vector(7 downto 0);   
+            pixel2      : in std_logic_vector(7 downto 0);   
+            bit_out     : out std_logic;       
+            cs          : out std_logic;       
+            dc          : out std_logic;       
+            addr1       : out std_logic_vector(7 downto 0); 
+            addr2       : out std_logic_vector(7 downto 0)       
+        );
+    end component;    
+    
+    component spi_slave is
+      port ( 
+            sck : in std_logic;  
+            rst : in std_logic;
+            done : in std_logic;  
+            MOSI : in std_logic;  
+            cs : in std_logic;
+            bit_out : out std_logic
+            
+            
+      );
+    end component;  
+
+    component arial_name IS
+      PORT (
+        clka : IN STD_LOGIC;
+        addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+      );
+    END component; 
+    
+    component times_name IS
+      PORT (
+        clka : IN STD_LOGIC;
+        addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+        douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+      );
+    END component;     
+    
+    component pixel_pusher is
+        port ( 
+                clk, en: in std_logic;
+                vs: in std_logic; 
+                pixel1: in std_logic_vector(7 downto 0); 
+                pixel2: in std_logic_vector(7 downto 0);
+                hcount, vcount: in std_logic_vector(9 downto 0);
+                font_toggle : in std_logic;  
+                vid: in std_logic; 
+                latitude_data  : in std_logic_vector(71 downto 0); 
+                longitude_data : in std_logic_vector(79 downto 0); 
+                R, B: out std_logic_vector(4 downto 0); 
+                G: out std_logic_vector(5 downto 0); 
+                font_type : out std_logic; 
+                addr1: out std_logic_vector(6 downto 0);
+                addr2 : out std_logic_vector(6 downto 0) 
+                   
+        );
     end component;
 
     component clk_div is
@@ -110,6 +179,8 @@ architecture Behavioral of top_gps is
             div : out std_logic     
         );
     end component;
+    
+    
     
     component vga_ctrl is
     port ( 
@@ -145,17 +216,31 @@ architecture Behavioral of top_gps is
     signal en_inter_vga : std_logic;
     signal newChar_inter : std_logic;
     signal charIn_inter : std_logic_vector(7 downto 0);
-    signal pixel: std_logic_vector(7 downto 0);  
+    signal pixel1: std_logic_vector(7 downto 0); 
+    signal pixel2: std_logic_vector(7 downto 0);
+    signal pixel1_name: std_logic_vector(7 downto 0); 
+    signal pixel2_name: std_logic_vector(7 downto 0);  
     signal hcount, vcount: std_logic_vector(9 downto 0); 
     signal vid: std_logic; 
     signal hs: std_logic; 
     signal vs: std_logic;
+    signal sck_inter : std_logic; 
+    signal font_toggle_inter : std_logic;
+    signal font_type : std_logic; 
     signal done_inter : std_logic; 
     signal latitude_data : std_logic_vector(71 downto 0); 
     signal longitude_data :std_logic_vector(79 downto 0);
     signal R, B: std_logic_vector(4 downto 0); 
     signal G: std_logic_vector(5 downto 0);
-    signal addr: std_logic_vector(6 downto 0);   
+    signal addr1: std_logic_vector(6 downto 0); 
+    signal addr2: std_logic_vector(6 downto 0); 
+    signal addr1_send: std_logic_vector(7 downto 0); 
+    signal addr2_send: std_logic_vector(7 downto 0);
+    signal bit_out_inter : std_logic;  
+    signal MOSI : std_logic;  
+    signal cs : std_logic; 
+    signal dc : std_logic; 
+    
    
 
 begin
@@ -194,7 +279,7 @@ begin
     U4: debounce
         port map(
             clk => clk, 
-            btn => btn, 
+            btn => btn(0), 
             dbnc => rst_inter
         );
         
@@ -213,16 +298,20 @@ begin
             clk => clk, 
             vs => vs,
             en => en_inter_vga,
-            pixel => pixel,
+            pixel1 => pixel1,
+            pixel2 => pixel2,
             hcount => hcount, 
             vcount => vcount,
+            font_toggle => font_toggle_inter,
             vid => vid,
             latitude_data => latitude_data ,
             longitude_data => longitude_data,  
             R => R, 
             B => B, 
             G => G, 
-            addr => addr
+            font_type => font_type,
+            addr1 => addr1,
+            addr2 => addr2
             
         ); 
         
@@ -247,12 +336,81 @@ begin
     U9 : fonts 
     port map(
         clka => clk, 
-        addra => addr, 
-        douta => pixel
+        addra => addr1, 
+        douta => pixel1
     
     );
-
+    
+    U10 : fonts_1 
+    port map(
+        clka => clk, 
+        addra => addr2, 
+        douta => pixel2
+    
+    );
+    
+    U11 : arial_name 
+    port map(
+        clka => clk, 
+        addra => addr1_send, 
+        douta => pixel1_name
+    
+    );
+    
+    U12 : times_name 
+    port map(
+        clka => clk, 
+        addra => addr2_send, 
+        douta => pixel2_name
+    
+    );  
+    
+    U13 : spi_clk
+    port map(
+        clk => clk, 
+        sck => sck_inter
+    ); 
+    
+    U14 : send_font 
+    port map (
+        sck => sck_inter,
+        font_type => font_type,
+        en => en_inter,
+        done => done_inter,
+        pixel1 => pixel1_name,
+        pixel2 => pixel2_name, 
+        bit_out => MOSI,
+        cs => cs,
+        dc => dc, 
+        addr1 => addr1_send,
+        addr2 => addr2_send 
+    ); 
+    
+    U15 : spi_slave
+    port map(
+        sck => sck_inter,
+        rst => rst_inter,
+        done => done_inter,
+        cs => cs, 
+        MOSI => MOSI,
+        bit_out => bit_out_inter
+    ); 
+    
+    U16: debounce
+        port map(
+            clk => clk, 
+            btn => btn(1), 
+            dbnc => font_toggle_inter
+        );
+    
+    
+    
+    sck <= sck_inter; 
     done <= done_inter;
+    MOSI_value <= MOSI;
+    bit_out <= bit_out_inter;
+    cs_value <= cs; 
+    dc_value <= dc; 
     vga_hs <= hs; 
     vga_vs <= vs;
     vga_r <= R;
