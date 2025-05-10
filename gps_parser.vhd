@@ -105,9 +105,9 @@ begin
             if rst = '1' then
                 counter <= (others => '0'); 
             else
-                counter <= std_logic_vector(unsigned(counter )+ 1)); 
+                counter <= std_logic_vector(unsigned(counter)+ 1); 
                 if(unsigned(counter) = 8749999) then
-                    done <= '1'
+                    done <= '1';
                     latitude_data_inter <= x"34302E353231373436"; 
                     longitude_data_inter <= x"2D37342E343630373832";
                     counter <= (others => '0');
