@@ -92,7 +92,26 @@ architecture Behavioral of top is
                 dbnc: out std_logic
         );
     end component;
-        
+    
+    component compute_bearing is
+        port ( 
+            clk : in std_logic; 
+            rst : in std_logic; 
+            latitude_data : in std_logic_vector(71 downto 0); 
+            longitude_data : in std_logic_vector(79 downto 0); 
+            distance_km : out std_logic_vector(47 downto 0)
+        );
+    end component;
+    
+    component ascii_to_number is
+    port ( 
+        clk : in std_logic; 
+        distance_km : in std_logic_vector(47 downto 0); 
+        distance_out : out std_logic_vector(47 downto 0)
+      
+    );
+    end component;
+            
     signal rst_inter : std_logic; 
     signal newChar_inter : std_logic; 
     signal en_inter : std_logic; 
@@ -103,6 +122,8 @@ architecture Behavioral of top is
     signal wr_done : std_logic; 
     signal latitude_data : std_logic_vector(71 downto 0);
     signal longitude_data : std_logic_vector(79 downto 0); 
+    signal distance_km : std_logic_vector(47 downto 0); 
+    signal distance_out : std_logic_vector(47 downto 0); 
 
 begin
 
@@ -153,6 +174,22 @@ begin
             newChar => newChar_inter, 
             char => charIn_inter     
         );
+        
+    U6 : compute_bearing 
+        port map(
+            clk => clk, 
+            rst => rst_inter, 
+            latitude_data => latitude_data, 
+            longitude_data => longitude_data, 
+            distance_km => distance_km 
+        ); 
+        
+     U7 : ascii_to_number
+        port map(
+            clk => clk, 
+            distance_km => distance_km,
+            distance_out => distance_out
+        ); 
 
     
     done <= done_inter; 
