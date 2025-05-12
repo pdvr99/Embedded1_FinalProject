@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date: 03/27/2025 08:29:16 AM
+-- Create Date: 04/03/2025 01:08:44 PM
 -- Design Name: 
 -- Module Name: vga_ctrl - Behavioral
 -- Project Name: 
@@ -32,79 +32,112 @@ use IEEE.NUMERIC_STD.ALL;
 --use UNISIM.VComponents.all;
 
 entity vga_ctrl is
-    port ( 
-            clk, en: in std_logic; 
-            hcount, vcount: out std_logic_vector(9 downto 0); 
-            done : in std_logic; 
-            vid: out std_logic; 
-            hs, vs: out std_logic  
-    );
+port(
+     clk, clk_en : in std_logic;
+     red : out std_logic;
+     hcount, vcount : out std_logic_vector(9 downto 0);
+     vid, hs, vs : out std_logic
+     );
 end vga_ctrl;
 
 architecture Behavioral of vga_ctrl is
 
-    signal hcount_inter, vcount_inter: std_logic_vector(9 downto 0) := (others => '0'); 
-    signal hs_inter, vs_inter: std_logic := '0';
-    signal vid_inter: std_logic := '0';
-
+signal hcounter : std_logic_vector(9 downto 0) := (others => '0');
+signal vcounter : std_logic_vector(9 downto 0) := (others => '0');
+signal reset_hcounter : std_logic := '0';
+constant maxLong : real := -74.470084;
+constant minLong : real := -74.458488;
+constant maxLat : real := 40.529002;
+constant minLat : real := 40.520552;
+constant long : real := -74.460653;
+constant lat : real := 40.521515;
+begin
+hcount <= hcounter;
+vcount <= vcounter;
+process(clk)
 
 begin
 
+if(rising_edge(clk)) then
 
-    process(clk)
-    begin
-        if(rising_edge(clk) and en = '1' and done = '1') then 
-                if(unsigned(hcount_inter) = 799) then 
-                    hcount_inter <= (others => '0');
-                    
-                    if(unsigned(vcount_inter) = 524) then 
-                        vcount_inter <= (others => '0'); 
-                    else 
-                        vcount_inter <= std_logic_vector(unsigned(vcount_inter) + 1);
-                    end if; 
-                else 
-                     hcount_inter <= std_logic_vector(unsigned(hcount_inter) + 1);
-                end if;           
-        end if;  
-         
-    end process; 
-    
-    
-    process(hcount_inter, vcount_inter)
-    begin 
-        if(unsigned(hcount_inter) >= 0 and unsigned(hcount_inter) <= 639 and unsigned(vcount_inter) >= 0 and unsigned(vcount_inter) <= 479) then
-            vid_inter <= '1'; 
+    if(clk_en = '1') then
+        
+        if(unsigned(hcounter) < 799) then
+            hcounter <= std_logic_vector(unsigned(hcounter) + 1);
         else
-            vid_inter <= '0';     
-        end if; 
-    end process; 
-    
-    
-    process(hcount_inter)
-    begin 
-        if(unsigned(hcount_inter) >= 656 and unsigned(hcount_inter) <= 751) then
-            hs_inter <= '0';  
+            hcounter <= (others => '0');
+            if(unsigned(vcounter) < 524) then
+                vcounter <= std_logic_vector(unsigned(vcounter) + 1);
+            else
+                vcounter <= (others => '0');
+            end if;  
+        end if;    
+    end if;
+end if;
+end process;
+--    if(unsigned(hcounter) < 640 and unsigned(vcounter) < 480) then
+--        vid <= '1';
+--        if(real(to_integer(unsigned(hcounter))) >= (((real(to_integer(unsigned(long))) - minLong)/0.000193)) * 640.0 - 20.0
+--        and
+--        real(to_integer(unsigned(hcounter))) <= (((real(to_integer(unsigned(long))) - minLong)/0.000193)) * 640.0 + 20.0
+--         ) then
+--            red <= '1';
+--        else
+--            red <= '0';
+--        end if;
+--    else
+--        vid <= '0';    
+--    end if;
+process(hcounter,vcounter)
+begin
+
+    if(unsigned(hcounter) < 640 and unsigned(vcounter) < 480) then
+        vid <= '1';
+        if(unsigned(hcounter) >= 397
+        and
+        unsigned(hcounter) <= 417
+        and
+        unsigned(vcounter) <= 400
+        and
+        unsigned(vcounter) >= 380
+         ) then
+            red <= '1';
         else
-            hs_inter <= '1'; 
-        end if; 
-    end process; 
-    
-    
-    process(vcount_inter) 
-    begin 
-        if(unsigned(vcount_inter) >= 490 and unsigned(vcount_inter) <= 491) then
-            vs_inter <= '0';  
-        else
-            vs_inter <= '1'; 
+            red <= '0';
         end if;
-    
-    end process;
-    
-    hcount <= hcount_inter; 
-    vcount <= vcount_inter;
-    hs <= hs_inter; 
-    vs <= vs_inter; 
-    vid <= vid_inter;
+    else
+        vid <= '0';    
+    end if;
+
+--    if(unsigned(hcounter) < 640 and unsigned(vcounter) < 480) then
+--        vid <= '1';
+--        if((unsigned(hcounter) >= 310) and unsigned(hcounter) <= 330 and (unsigned(vcounter) >= 230) and unsigned(vcounter) <= 250) then
+--            red <= '1';
+--        else
+--            red <= '0';
+--        end if;
+--    else
+--        vid <= '0';    
+--    end if;
+end process;
+
+process(hcounter)
+begin
+    if(unsigned(hcounter) > 655 and unsigned(hcounter) < 752) then
+        hs <= '0';
+    else
+        hs <= '1';    
+    end if;
+end process;
+
+process(vcounter)
+begin
+    if(unsigned(vcounter) > 489 and unsigned(vcounter) < 492) then
+        vs <= '0';
+    else
+        vs <= '1';    
+    end if;
+end process;
 
 
 end Behavioral;
