@@ -58,6 +58,8 @@ architecture Behavioral of gps_parser is
     signal longitude_index : integer range 0 to 9 := 0;
 
     signal counter : std_logic_vector(24 downto 0) := (others => '0');
+    
+    signal done_inter : std_logic; 
 
 begin
     
@@ -69,7 +71,7 @@ begin
                 latitude_data_inter <= (others => '0'); 
                 longitude_data_inter <= (others => '0'); 
                 read_addr_inter <= 0; 
-                done <= '0';
+                counter <= (others => '0'); 
             elsif start_parse = '1' then
             
                 read_addr_inter <= read_addr_inter + 1; 
@@ -91,32 +93,26 @@ begin
                 end if; 
                 
                 if comma_count > 5 then
-                    done <= '1'; 
+                    done_inter <= '1'; 
                 else
-                    done <= '0'; 
+                    done_inter <= '0'; 
                 end if; 
-            end if; 
-        end if;
-    end process;
 
-    process(clk)
-    begin 
-        if rising_edge(clk) then 
-            if rst = '1' then
-                counter <= (others => '0'); 
-            else
-                counter <= std_logic_vector(unsigned(counter)+ 1); 
+               
                 if(unsigned(counter) = 8749999) then
-                    done <= '1';
+                    done_inter <= '1';
                     latitude_data_inter <= x"34302E353231373436"; 
                     longitude_data_inter <= x"2D37342E343630373832";
                     counter <= (others => '0');
                 end if; 
-            end if; 
-        end if; 
-    end process; 
+                
+                counter <= std_logic_vector(unsigned(counter)+ 1); 
+            end if;  
+        end if;
+    end process;
 
 
+    done <= done_inter; 
     read_addr <= read_addr_inter;
     latitude_data <= latitude_data_inter;
     longitude_data <= longitude_data_inter;
